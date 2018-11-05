@@ -20352,7 +20352,7 @@ activated. Default is @code{0}.
 Set the video size. This option is for video only. For the syntax of this
 option, check the
 @ref{video size syntax,,"Video size" section in the ffmpeg-utils manual,ffmpeg-utils}.
-Default and minimum resolution is @code{640x480}.
+Default and minimum resolution is @code{640x360}.
 
 @item meter
 Set the EBU scale meter. Default is @code{9}. Common values are @code{9} and
