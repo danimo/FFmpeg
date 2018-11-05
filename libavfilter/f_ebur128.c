@@ -171,7 +171,7 @@ enum {
 #define F AV_OPT_FLAG_FILTERING_PARAM
 static const AVOption ebur128_options[] = {
     { "video", "set video output", OFFSET(do_video), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, V|F },
-    { "size",  "set video size",   OFFSET(w), AV_OPT_TYPE_IMAGE_SIZE, {.str = "640x480"}, 0, 0, V|F },
+    { "size",  "set video size",   OFFSET(w), AV_OPT_TYPE_IMAGE_SIZE, {.str = "640x360"}, 0, 0, V|F },
     { "meter", "set scale meter (+9 to +18)",  OFFSET(meter), AV_OPT_TYPE_INT, {.i64 = 9}, 9, 18, V|F },
     { "framelog", "force frame logging level", OFFSET(loglevel), AV_OPT_TYPE_INT, {.i64 = -1},   INT_MIN, INT_MAX, A|V|F, "level" },
         { "info",    "information logging level", 0, AV_OPT_TYPE_CONST, {.i64 = AV_LOG_INFO},    INT_MIN, INT_MAX, A|V|F, "level" },
@@ -297,9 +297,9 @@ static int config_video_output(AVFilterLink *outlink)
     AVFrame *outpicref;
 
     /* check if there is enough space to represent everything decently */
-    if (ebur128->w < 640 || ebur128->h < 480) {
+    if (ebur128->w < 640 || ebur128->h < 360) {
         av_log(ctx, AV_LOG_ERROR, "Video size %dx%d is too small, "
-               "minimum size is 640x480\n", ebur128->w, ebur128->h);
+               "minimum size is 640x360\n", ebur128->w, ebur128->h);
         return AVERROR(EINVAL);
     }
     outlink->w = ebur128->w;
