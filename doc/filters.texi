@@ -20424,6 +20424,10 @@ Set the value displayed by the gauge. Valid values are @code{momentary} and s
 scenarios it may be more useful to observe the short term value instead (e.g.
 live mixing).
 
+@item gaugewidth
+Sets the width of gauge in pixel. Valid values are 20-100. By default the width is
+set to 20, but a wider gauge may be useful (e.g. live mixing).
+
 @item scale
 Sets the display scale for the loudness. Valid parameters are @code{absolute}
 (in LUFS) or @code{relative} (LU) relative to the target. This only affects the

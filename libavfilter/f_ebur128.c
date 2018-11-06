@@ -147,6 +147,7 @@ typedef struct EBUR128Context {
     int target;                     ///< target level in LUFS used to set relative zero LU in visualization
     int gauge_type;                 ///< whether gauge shows momentary or short
     int scale;                      ///< display scale type of statistics
+    int gaugewidth;                 ///< sets the width of the gauge
 } EBUR128Context;
 
 enum {
@@ -194,6 +195,7 @@ static const AVOption ebur128_options[] = {
         { "LUFS",       "display absolute values (LUFS)",          0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_ABSOLUTE}, INT_MIN, INT_MAX, V|F, "scaletype" },
         { "relative",   "display values relative to target (LU)",  0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_RELATIVE}, INT_MIN, INT_MAX, V|F, "scaletype" },
         { "LU",         "display values relative to target (LU)",  0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_RELATIVE}, INT_MIN, INT_MAX, V|F, "scaletype" },
+    { "gaugewidth", "sets width of gauge in pixel (20-100)", OFFSET(gaugewidth), AV_OPT_TYPE_INT, {.i64 = 20}, 20, 100, V|F },
     { NULL },
 };
 
@@ -315,7 +317,7 @@ static int config_video_output(AVFilterLink *outlink)
     ebur128->text.h  = ebur128->h - PAD - ebur128->text.y;
 
     /* configure gauge position and size */
-    ebur128->gauge.w = 20;
+    ebur128->gauge.w = ebur128->gaugewidth;
     ebur128->gauge.h = ebur128->text.h;
     ebur128->gauge.x = ebur128->w - PAD - ebur128->gauge.w;
     ebur128->gauge.y = ebur128->text.y;
