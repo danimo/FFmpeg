@@ -148,6 +148,7 @@ typedef struct EBUR128Context {
     int gauge_type;                 ///< whether gauge shows momentary or short
     int scale;                      ///< display scale type of statistics
     int gaugewidth;                 ///< sets the width of the gauge
+    int orientation;                ///< sets gauge to the left/right of graph and writing direction start
 } EBUR128Context;
 
 enum {
@@ -164,6 +165,11 @@ enum {
 enum {
     SCALE_TYPE_ABSOLUTE = 0,
     SCALE_TYPE_RELATIVE = 1,
+};
+
+enum {
+    ORIENTATION_RIGHT = 0,
+    ORIENTATION_LEFT = 1,
 };
 
 #define OFFSET(x) offsetof(EBUR128Context, x)
@@ -196,6 +202,11 @@ static const AVOption ebur128_options[] = {
         { "relative",   "display values relative to target (LU)",  0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_RELATIVE}, INT_MIN, INT_MAX, V|F, "scaletype" },
         { "LU",         "display values relative to target (LU)",  0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_RELATIVE}, INT_MIN, INT_MAX, V|F, "scaletype" },
     { "gaugewidth", "sets width of gauge in pixel (20-100)", OFFSET(gaugewidth), AV_OPT_TYPE_INT, {.i64 = 20}, 20, 100, V|F },
+    { "orientation", "sets gauge to the left/right of graph", OFFSET(orientation), AV_OPT_TYPE_INT, {.i64 = 0}, ORIENTATION_RIGHT, ORIENTATION_LEFT, V|F, "orientation" },
+        { "right",   "gauge on right side", 0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
+        { "r",       "gauge on right side", 0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
+        { "left",    "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
+        { "l",       "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
     { NULL },
 };
 
@@ -318,15 +329,29 @@ static int config_video_output(AVFilterLink *outlink)
 
     /* configure gauge position and size */
     ebur128->gauge.w = ebur128->gaugewidth;
+    switch (ebur128->orientation) {
+        case ORIENTATION_RIGHT:
+            ebur128->gauge.x = ebur128->w - PAD - ebur128->gauge.w;
+            break;
+        case ORIENTATION_LEFT:
+            ebur128->gauge.x = ebur128->text.x + ebur128->text.w + PAD;
+            break;
+    }
     ebur128->gauge.h = ebur128->text.h;
-    ebur128->gauge.x = ebur128->w - PAD - ebur128->gauge.w;
     ebur128->gauge.y = ebur128->text.y;
 
     /* configure graph position and size */
-    ebur128->graph.x = ebur128->text.x + ebur128->text.w + PAD;
-    ebur128->graph.y = ebur128->gauge.y;
-    ebur128->graph.w = ebur128->gauge.x - ebur128->graph.x - PAD;
+    ebur128->graph.w = ebur128->w - ebur128->gauge.w - ebur128->text.y - ebur128->text.w + PAD;
+    switch (ebur128->orientation) {
+        case ORIENTATION_RIGHT:
+            ebur128->graph.x = ebur128->text.x + ebur128->text.w + PAD;
+            break;
+        case ORIENTATION_LEFT:
+            ebur128->graph.x = ebur128->w - PAD - ebur128->graph.w;
+            break;
+    }
     ebur128->graph.h = ebur128->gauge.h;
+    ebur128->graph.y = ebur128->gauge.y;
 
     /* graph and gauge share the LU-to-pixel code */
     av_assert0(ebur128->graph.h == ebur128->gauge.h);
@@ -795,8 +820,16 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                 for (y = 0; y < ebur128->graph.h; y++) {
                     const uint8_t *c = get_graph_color(ebur128, y_loudness_lu_graph, y);
 
-                    memmove(p, p + 3, (ebur128->graph.w - 1) * 3);
-                    memcpy(p + (ebur128->graph.w - 1) * 3, c, 3);
+                    switch (ebur128->orientation) {
+                        case ORIENTATION_RIGHT:
+                            memmove(p, p + 3, (ebur128->graph.w - 1) * 3);
+                            memcpy(p + (ebur128->graph.w - 1) * 3, c, 3);
+                            break;
+                        case ORIENTATION_LEFT:
+                            memmove(p + 3, p, (ebur128->graph.w - 1) * 3);
+                            memcpy(p, c, 3);
+                            break;
+                    }
                     p += pic->linesize[0];
                 }
 

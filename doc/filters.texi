@@ -20428,6 +20428,11 @@ live mixing).
 Sets the width of gauge in pixel. Valid values are 20-100. By default the width is
 set to 20, but a wider gauge may be useful (e.g. live mixing).
 
+@item orientation
+Defines whether the gauge is to the @code{left}(@code{l}) or to the @code{right}(@code{r}) of the graph.
+At the same time it defines whether the graphs writing direction is @code{left} to right or @code{right} to left.
+In some cases (e.g. live mixing) it’s more important to focus on the gauge on the left.
+
 @item scale
 Sets the display scale for the loudness. Valid parameters are @code{absolute}
 (in LUFS) or @code{relative} (LU) relative to the target. This only affects the
