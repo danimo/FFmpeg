@@ -797,8 +797,8 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                 loudness_3000 -= ebur128->pan_law;
             }
 
-#define LOG_FMT "TARGET:%d LUFS    M:%6.1f S:%6.1f     I:%6.1f %s       LRA:%6.1f LU"
-
+#define LOG_FMT " T:%d LUFS   M:%5.1f  S:%5.1f  I:%5.1f %s   LRA:%4.1f LU"
+            
             /* push one video frame */
             if (ebur128->do_video) {
                 int x, y, ret;
