@@ -20437,6 +20437,11 @@ In some cases (e.g. live mixing) it’s more important to focus on the gauge on 
 Sets the display scale for the loudness. Valid parameters are @code{absolute}
 (in LUFS) or @code{relative} (LU) relative to the target. This only affects the
 video output, not the summary or continuous log output.
+
+@item timedata
+This option shows some more statistics. Set @code{0} to not show them (default),
+@code{1} to show the running time, @code{2} for showing the time span of the graph
+and @code{3} to show them both.
 @end table
 
 @subsection Examples
