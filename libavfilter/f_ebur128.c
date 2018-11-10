@@ -37,6 +37,7 @@
 #include "libavutil/xga_font_data.h"
 #include "libavutil/opt.h"
 #include "libavutil/timestamp.h"
+#include "libavutil/time.h"
 #include "libswresample/swresample.h"
 #include "audio.h"
 #include "avfilter.h"
@@ -149,6 +150,9 @@ typedef struct EBUR128Context {
     int scale;                      ///< display scale type of statistics
     int gaugewidth;                 ///< sets the width of the gauge
     int orientation;                ///< sets gauge to the left/right of graph and writing direction start
+    int timedata;                   ///< whether or not to show running time of plugin or time span of graph
+    int64_t starttime;              ///< time when plugin is startet
+    int graph_hr, graph_min, graph_sec; ///< holds the time span of graph in hours, minutes, seconds
 } EBUR128Context;
 
 enum {
@@ -170,6 +174,12 @@ enum {
 enum {
     ORIENTATION_RIGHT = 0,
     ORIENTATION_LEFT = 1,
+};
+
+enum {
+    TIMEDATA_NONE = 0,
+    TIMEDATA_RUN = 1,
+    TIMEDATA_GRAPH = 2,
 };
 
 #define OFFSET(x) offsetof(EBUR128Context, x)
@@ -207,6 +217,7 @@ static const AVOption ebur128_options[] = {
         { "r",       "gauge on right side",     0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
         { "left",   "gauge on left side",       0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT}, INT_MIN, INT_MAX, V|F, "orientation" },
         { "l",         "gauge on left side",    0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT}, INT_MIN, INT_MAX, V|F, "orientation" },
+    { "timedata", "display none, run time, graph time span",  OFFSET(timedata), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 3, V|F },
     { NULL },
 };
 
@@ -308,6 +319,10 @@ static int config_video_output(AVFilterLink *outlink)
     AVFilterContext *ctx = outlink->src;
     EBUR128Context *ebur128 = ctx->priv;
     AVFrame *outpicref;
+    int graphtimespan;
+
+    /* sets starttime of the plugin */
+    ebur128->starttime = av_gettime() / 1000000;
 
     /* check if there is enough space to represent everything decently */
     if (ebur128->w < 640 || ebur128->h < 360) {
@@ -406,6 +421,12 @@ static int config_video_output(AVFilterLink *outlink)
 } while (0)
     DRAW_RECT(ebur128->graph);
     DRAW_RECT(ebur128->gauge);
+
+    /* prepare time span for graph */
+    graphtimespan = ebur128->graph.w / 10;
+    ebur128->graph_hr = graphtimespan / 3600;
+    ebur128->graph_min = (graphtimespan - ebur128->graph_hr * 3600) / 60;
+    ebur128->graph_sec = graphtimespan - ebur128->graph_hr * 3600 - ebur128->graph_min * 60;
 
     return 0;
 }
@@ -805,6 +826,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                 uint8_t *p;
                 double gauge_value;
                 int y_loudness_lu_graph, y_loudness_lu_gauge;
+                int sec_since_start, run_hour, run_min, run_sec;
 
                 if (ebur128->gauge_type == GAUGE_TYPE_MOMENTARY) {
                     gauge_value = loudness_400 - ebur128->target;
@@ -854,6 +876,22 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                              LOG_FMT "     ", // padding to erase trailing characters
                              ebur128->target, loudness_400-ebur128->target, loudness_3000-ebur128->target,
                              ebur128->integrated_loudness-ebur128->target, "LU", ebur128->loudness_range);
+                }
+
+                /* draw run timer */
+                if (ebur128->timedata & TIMEDATA_RUN) {
+                    sec_since_start = ((av_gettime() / 1000000) - ebur128->starttime);
+                    run_hour = sec_since_start / 3600;
+                    run_min = (sec_since_start - run_hour * 3600) / 60;
+                    run_sec = sec_since_start - run_hour * 3600 - run_min * 60;
+                    drawtext(pic, ebur128->w - 112, PAD - PAD/2, FONT16, font_colors, "run: %02d:%02d:%02d", //121
+                             run_hour, run_min, run_sec);
+                }
+
+                /* draw span time graph */
+                if (ebur128->timedata & TIMEDATA_GRAPH) {
+                    drawtext(pic, ebur128->w - 119, 3 * PAD, FONT8, font_colors, "span: %02d:%02d:%02d", //136
+                             ebur128->graph_hr, ebur128->graph_min, ebur128->graph_sec);
                 }
 
                 /* set pts and push frame */
