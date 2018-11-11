@@ -20443,6 +20443,14 @@ This option shows some more statistics. Set @code{0} to not show them (default),
 @code{1} to show the running time, @code{2} for showing the time span of the graph
 and @code{3} to show them both.
 
+@item factor
+With the option factor one can multiply the time span of the graph. The time span depends
+on the number of pixels of the graphs width. As the video is updated with 10 frames per second
+10 pixels represent 1 second. You can slightly modify the graphs time span with the videos width.
+To vary the graphs time span in a bigger range set the factor between @code{1} (default) and @code{120}.
+To monitor the spreading and development of the loudness it is often useful to see a wider range
+(e.g. live mixing).
+
 @item divider
 This option shows small markers above the graph to divide the graph in tenths of the time span.
 It is disabled @code{0} by default and can be enabled with @code{1}.
