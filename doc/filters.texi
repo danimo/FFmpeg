@@ -20442,6 +20442,10 @@ video output, not the summary or continuous log output.
 This option shows some more statistics. Set @code{0} to not show them (default),
 @code{1} to show the running time, @code{2} for showing the time span of the graph
 and @code{3} to show them both.
+
+@item divider
+This option shows small markers above the graph to divide the graph in tenths of the time span.
+It is disabled @code{0} by default and can be enabled with @code{1}.
 @end table
 
 @subsection Examples
