@@ -153,6 +153,7 @@ typedef struct EBUR128Context {
     int timedata;                   ///< whether or not to show running time of plugin or time span of graph
     int64_t starttime;              ///< time when plugin is startet
     int graph_hr, graph_min, graph_sec; ///< holds the time span of graph in hours, minutes, seconds
+    int divider;                    ///< shows small markers above graph to divide graph in tenths
 } EBUR128Context;
 
 enum {
@@ -218,6 +219,7 @@ static const AVOption ebur128_options[] = {
         { "left",    "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
         { "l",       "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
     { "timedata", "display none, run time, graph time span",  OFFSET(timedata), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 3, V|F },
+    { "divider", "display markers to divide the graph", OFFSET(divider), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, V|F },
     { NULL },
 };
 
@@ -421,6 +423,13 @@ static int config_video_output(AVFilterLink *outlink)
 } while (0)
     DRAW_RECT(ebur128->graph);
     DRAW_RECT(ebur128->gauge);
+
+    /* draw divider above the graph */
+    if (ebur128->divider) {
+        for (i=1; i < 10; i++) {
+            drawline(outpicref, ebur128->graph.x + (ebur128->graph.w / 10 * i), ebur128->graph.y - 2, 2, 3);
+        }
+    }
 
     /* prepare time span for graph */
     graphtimespan = ebur128->graph.w / 10;
@@ -827,6 +836,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                 double gauge_value;
                 int y_loudness_lu_graph, y_loudness_lu_gauge;
                 int sec_since_start, run_hour, run_min, run_sec;
+                static int framecounter = 0;
 
                 if (ebur128->gauge_type == GAUGE_TYPE_MOMENTARY) {
                     gauge_value = loudness_400 - ebur128->target;
