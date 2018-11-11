@@ -154,6 +154,7 @@ typedef struct EBUR128Context {
     int64_t starttime;              ///< time when plugin is startet
     int graph_hr, graph_min, graph_sec; ///< holds the time span of graph in hours, minutes, seconds
     int divider;                    ///< shows small markers above graph to divide graph in tenths
+    int factor;                     ///< factor to multiply the time span of graph
 } EBUR128Context;
 
 enum {
@@ -220,6 +221,7 @@ static const AVOption ebur128_options[] = {
         { "l",       "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
     { "timedata", "display none, run time, graph time span",  OFFSET(timedata), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 3, V|F },
     { "divider", "display markers to divide the graph", OFFSET(divider), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, V|F },
+    { "factor", "multiplies time span of graph", OFFSET(factor), AV_OPT_TYPE_INT, {.i64 = 1}, 1, 120, V|F },
     { NULL },
 };
 
@@ -432,7 +434,7 @@ static int config_video_output(AVFilterLink *outlink)
     }
 
     /* prepare time span for graph */
-    graphtimespan = ebur128->graph.w / 10;
+    graphtimespan = ebur128->graph.w * ebur128->factor / 10;
     ebur128->graph_hr = graphtimespan / 3600;
     ebur128->graph_min = (graphtimespan - ebur128->graph_hr * 3600) / 60;
     ebur128->graph_sec = graphtimespan - ebur128->graph_hr * 3600 - ebur128->graph_min * 60;
@@ -848,21 +850,24 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
                 y_loudness_lu_gauge = lu_to_y(ebur128, gauge_value);
 
                 /* draw the graph using the short-term loudness */
-                p = pic->data[0] + ebur128->graph.y*pic->linesize[0] + ebur128->graph.x*3;
-                for (y = 0; y < ebur128->graph.h; y++) {
-                    const uint8_t *c = get_graph_color(ebur128, y_loudness_lu_graph, y);
+                framecounter += 1;
+                if (framecounter % ebur128->factor == 0) {
+                    p = pic->data[0] + ebur128->graph.y*pic->linesize[0] + ebur128->graph.x*3;
+                    for (y = 0; y < ebur128->graph.h; y++) {
+                        const uint8_t *c = get_graph_color(ebur128, y_loudness_lu_graph, y);
 
-                    switch (ebur128->orientation) {
-                        case ORIENTATION_RIGHT:
-                            memmove(p, p + 3, (ebur128->graph.w - 1) * 3);
-                            memcpy(p + (ebur128->graph.w - 1) * 3, c, 3);
-                            break;
-                        case ORIENTATION_LEFT:
-                            memmove(p + 3, p, (ebur128->graph.w - 1) * 3);
-                            memcpy(p, c, 3);
-                            break;
+                        switch (ebur128->orientation) {
+                            case ORIENTATION_RIGHT:
+                                memmove(p, p + 3, (ebur128->graph.w - 1) * 3);
+                                memcpy(p + (ebur128->graph.w - 1) * 3, c, 3);
+                                break;
+                            case ORIENTATION_LEFT:
+                                memmove(p + 3, p, (ebur128->graph.w - 1) * 3);
+                                memcpy(p, c, 3);
+                                break;
+                        }
+                        p += pic->linesize[0];
                     }
-                    p += pic->linesize[0];
                 }
 
                 /* draw the gauge using either momentary or short-term loudness */
