@@ -215,10 +215,10 @@ static const AVOption ebur128_options[] = {
         { "LU",         "display values relative to target (LU)",  0, AV_OPT_TYPE_CONST, {.i64 = SCALE_TYPE_RELATIVE}, INT_MIN, INT_MAX, V|F, "scaletype" },
     { "gaugewidth", "sets width of gauge in pixel (20-100)", OFFSET(gaugewidth), AV_OPT_TYPE_INT, {.i64 = 20}, 20, 100, V|F },
     { "orientation", "sets gauge to the left/right of graph", OFFSET(orientation), AV_OPT_TYPE_INT, {.i64 = 0}, ORIENTATION_RIGHT, ORIENTATION_LEFT, V|F, "orientation" },
-        { "right",   "gauge on right side",     0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
-        { "r",       "gauge on right side",     0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
-        { "left",   "gauge on left side",       0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT}, INT_MIN, INT_MAX, V|F, "orientation" },
-        { "l",         "gauge on left side",    0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT}, INT_MIN, INT_MAX, V|F, "orientation" },
+        { "right",   "gauge on right side", 0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
+        { "r",       "gauge on right side", 0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_RIGHT}, INT_MIN, INT_MAX, V|F, "orientation" },
+        { "left",    "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
+        { "l",       "gauge on left side",  0, AV_OPT_TYPE_CONST, {.i64 = ORIENTATION_LEFT},  INT_MIN, INT_MAX, V|F, "orientation" },
     { "timedata", "display none, run time, graph time span",  OFFSET(timedata), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 3, V|F },
     { "divider", "display markers to divide the graph", OFFSET(divider), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, V|F },
     { "factor", "multiplies time span of graph", OFFSET(factor), AV_OPT_TYPE_INT, {.i64 = 1}, 1, 120, V|F },
@@ -371,7 +371,7 @@ static int config_video_output(AVFilterLink *outlink)
     }
     ebur128->graph.h = ebur128->gauge.h;
     ebur128->graph.y = ebur128->gauge.y;
-    
+
     /* graph and gauge share the LU-to-pixel code */
     av_assert0(ebur128->graph.h == ebur128->gauge.h);
 
@@ -830,7 +830,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *insamples)
             }
 
 #define LOG_FMT " T:%d LUFS   M:%5.1f  S:%5.1f  I:%5.1f %s   LRA:%4.1f LU"
-            
+
             /* push one video frame */
             if (ebur128->do_video) {
                 int x, y, ret;
